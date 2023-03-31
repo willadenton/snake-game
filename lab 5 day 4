@@ -1,0 +1,57 @@
+#********************************************************************
+#   importing packages already on the RPi into this Python program  *
+#********************************************************************
+
+import board
+import busio
+import digitalio
+import adafruit_max31856
+
+#***********************************
+#   Setting up the thermocouple    *
+#***********************************
+
+# create an SPI object
+spi = busio.SPI(board.SCK, board.MOSI, board.MISO)
+
+# allocate a Chip Select pin for the thermocouple (CS pin) and set the direction
+cs = digitalio.DigitalInOut(board.D5)
+cs.direction = digitalio.Direction.OUTPUT
+
+# create a thermocouple object with the above
+thermocouple = adafruit_max31856.MAX31856(spi, cs)
+
+#*******************************************************************
+#**    reading the thermocouple and printing output on screen      *
+#*******************************************************************
+
+print(thermocouple.temperature, "C")
+print(str(thermocouple.temperature * 9 / 5 + 32), "F")
+
+import RPi.GPIO as GPIO
+GPIO.setmode(GPIO.BCM)
+GPIO_LED_1=(17)
+GPIO.setup(GPIO_LED_1,GPIO.OUT)
+
+import RPi.GPIO as GPIO
+GPIO.setmode(GPIO.BCM)
+GPIO_LED_2=(13)
+GPIO.setup(GPIO_LED_2,GPIO.OUT)
+
+if thermocouple.temperature > 25.00:
+    GPIO.output(GPIO_LED_1, GPIO.HIGH)
+    print ("WARNING!!!")
+elif thermocouple.temperature < 15.00:
+    GPIO.output(GPIO_LED_2, GPIO.HIGH)
+    print ("WARNING!!!")
+else:
+    GPIO.output(GPIO_LED_1, GPIO.LOW)
+    GPIO.output(GPIO_LED_2, GPIO.LOW)
+
+
+with open("thermodata.csv", "a") as log:
+    log.write("\n" + "Celcius, Farenheit")
+for x in range(30):
+    with open("thermodata.csv", "a") as log:
+        log.write("\n{0},{1}".format(str(thermocouple.temperature),str(thermocouple.temperature*9/5+32)))
+
